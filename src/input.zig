@@ -127,7 +127,7 @@ pub const InputHandler = struct {
     prefix_key: u8 = default_prefix_key,
     bindings: []const Binding = &default_bindings,
     /// If true, focus actions exit command mode (default: stay in command mode).
-    exit_on_focus: bool = false,
+    exit_on_focus_change: bool = false,
 
     const State = enum { normal, command, command_esc, command_csi };
 
@@ -198,7 +198,7 @@ pub const InputHandler = struct {
                         b.sequence[1] == '[' and
                         b.sequence[2] == byte)
                     {
-                        self.state = if (self.exit_on_focus) .normal else .command;
+                        self.state = if (self.exit_on_focus_change) .normal else .command;
                         return b.action;
                     }
                 }

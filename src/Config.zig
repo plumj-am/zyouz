@@ -53,7 +53,7 @@ pub const Config = struct {
     prefix_key: u8 = 0x13, // Ctrl+S default
     pane_gap: u16 = 1,
     bindings: []const @import("input.zig").Binding = &.{},
-    exit_on_focus: bool = false,
+    exit_on_focus_change: bool = false,
 
     pub fn deinit(self: *Config) void {
         self.layouts.deinit(self.arena.allocator());
@@ -106,7 +106,7 @@ pub const ZonBinding = struct {
 pub const ZonConfig = struct {
     prefix_key: ?[]const u8 = null,
     pane_gap: ?u16 = null,
-    exit_on_focus: ?bool = null,
+    exit_on_focus_change: ?bool = null,
     layouts: []const ZonNamedLayout,
     keymaps: ?[]const ZonBinding = null,
 };
@@ -211,7 +211,7 @@ pub fn parseFromSlice(backing_allocator: Allocator, source: [:0]const u8) ParseE
         .prefix_key = prefix_key,
         .pane_gap = zon_config.pane_gap orelse 1,
         .bindings = bindings,
-        .exit_on_focus = zon_config.exit_on_focus orelse false,
+        .exit_on_focus_change = zon_config.exit_on_focus_change orelse false,
     };
 }
 
