@@ -18,7 +18,7 @@ pub const InputHandler = struct {
     state: State = .normal,
     prefix_key: u8 = default_prefix_key,
     /// If true, focus actions exit command mode (default: stay in command mode).
-    exit_on_focus: bool = false,
+    exit_on_focus_change: bool = false,
 
     const State = enum { normal, command, command_esc, command_csi };
 
@@ -74,19 +74,19 @@ pub const InputHandler = struct {
             .command_csi => {
                 return switch (byte) {
                     'A' => {
-                        self.state = if (self.exit_on_focus) .normal else .command;
+                        self.state = if (self.exit_on_focus_change) .normal else .command;
                         return .focus_up;
                     },
                     'B' => {
-                        self.state = if (self.exit_on_focus) .normal else .command;
+                        self.state = if (self.exit_on_focus_change) .normal else .command;
                         return .focus_down;
                     },
                     'C' => {
-                        self.state = if (self.exit_on_focus) .normal else .command;
+                        self.state = if (self.exit_on_focus_change) .normal else .command;
                         return .focus_right;
                     },
                     'D' => {
-                        self.state = if (self.exit_on_focus) .normal else .command;
+                        self.state = if (self.exit_on_focus_change) .normal else .command;
                         return .focus_left;
                     },
                     else => {

@@ -239,7 +239,7 @@ pub fn runMultiPane(
     active_pane: *usize,
     prefix_key: u8,
     pane_gap: u16,
-    exit_on_focus: bool,
+    exit_on_focus_change: bool,
 ) !void {
     try installSignalHandler();
     defer {
@@ -256,7 +256,7 @@ pub fn runMultiPane(
     }
 
     var handler = input.InputHandler.initWithPrefix(prefix_key);
-    handler.exit_on_focus = exit_on_focus;
+    handler.exit_on_focus_change = exit_on_focus_change;
     var mouse_parser = MouseParser{};
     var drag_state: ?DragState = null;
     var selection_anchor: ?SelectionAnchor = null;
