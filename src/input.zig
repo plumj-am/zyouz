@@ -14,21 +14,100 @@ pub const Action = union(enum) {
     none,
 };
 
+/// Maps a key byte sequence (from human-readable name) to an action. Bindings
+/// are only matched in command mode.
+pub const Binding = struct {
+    action: Action,
+    /// Byte sequence that triggers the action.
+    /// e.g. [0x11] for ctrl+q, [0x1B, '[', 'A'] for up arrow.
+    sequence: []const u8,
+};
+
+pub const default_bindings = [_]Binding{
+    .{ .action = .quit, .sequence = &[_]u8{0x11} }, // ctrl+q
+    .{ .action = .focus_up, .sequence = &[_]u8{ 0x1B, '[', 'A' } },
+    .{ .action = .focus_down, .sequence = &[_]u8{ 0x1B, '[', 'B' } },
+    .{ .action = .focus_right, .sequence = &[_]u8{ 0x1B, '[', 'C' } },
+    .{ .action = .focus_left, .sequence = &[_]u8{ 0x1B, '[', 'D' } },
+};
+
+/// Human-readable key name -> byte sequence.
+/// Returns null if the key name is not recognised.
+pub fn parseKey(allocator: std.mem.Allocator, key: []const u8) ?[]const u8 {
+    // ctrl-a through ctrl-z
+    if (key.len == 6 and std.mem.eql(u8, key[0..5], "ctrl-")) {
+        const ch = key[5];
+        if (ch >= 'a' and ch <= 'z') {
+            const buf = allocator.alloc(u8, 1) catch return null;
+            buf[0] = ch - 'a' + 1;
+            return buf[0..1];
+        }
+    }
+    // Arrows.
+    if (std.mem.eql(u8, key, "up")) {
+        const buf = allocator.alloc(u8, 3) catch return null;
+        buf[0] = 0x1B;
+        buf[1] = '[';
+        buf[2] = 'A';
+        return buf;
+    }
+    if (std.mem.eql(u8, key, "down")) {
+        const buf = allocator.alloc(u8, 3) catch return null;
+        buf[0] = 0x1B;
+        buf[1] = '[';
+        buf[2] = 'B';
+        return buf;
+    }
+    if (std.mem.eql(u8, key, "right")) {
+        const buf = allocator.alloc(u8, 3) catch return null;
+        buf[0] = 0x1B;
+        buf[1] = '[';
+        buf[2] = 'C';
+        return buf;
+    }
+    if (std.mem.eql(u8, key, "left")) {
+        const buf = allocator.alloc(u8, 3) catch return null;
+        buf[0] = 0x1B;
+        buf[1] = '[';
+        buf[2] = 'D';
+        return buf;
+    }
+    return null;
+}
+
+/// Human-readable action name -> Action.
+pub fn parseAction(name: []const u8) ?Action {
+    if (std.mem.eql(u8, name, "quit")) return .quit;
+    if (std.mem.eql(u8, name, "focus_up")) return .focus_up;
+    if (std.mem.eql(u8, name, "focus_down")) return .focus_down;
+    if (std.mem.eql(u8, name, "focus_left")) return .focus_left;
+    if (std.mem.eql(u8, name, "focus_right")) return .focus_right;
+    return null;
+}
+
 pub const InputHandler = struct {
     state: State = .normal,
     prefix_key: u8 = default_prefix_key,
+    bindings: []const Binding = &default_bindings,
 
     const State = enum { normal, command, command_esc, command_csi };
 
-    const default_prefix_key = 0x13; // Ctrl+S
-    const quit_key = 0x11; // Ctrl+Q
+    const default_prefix_key = 0x13; // ctrl+s
 
     pub fn initWithPrefix(prefix: u8) InputHandler {
         return .{ .prefix_key = prefix };
     }
 
-    /// Parse a "ctrl-<letter>" string into a control character byte.
-    /// Returns null if the input is not a valid ctrl-key string.
+    /// If bindings are empty, use defaults.
+    pub fn initWithBindings(prefix: u8, bindings: []const Binding) InputHandler {
+        if (bindings.len == 0) {
+            return .{ .prefix_key = prefix };
+        }
+        return .{ .prefix_key = prefix, .bindings = bindings };
+    }
+
+    /// "ctrl-<letter>" string -> control character byte.
+    /// Returns null if input is not valid ctrl-key string.
     pub fn parseCtrlKey(s: []const u8) ?u8 {
         if (s.len == 6 and std.mem.eql(u8, s[0..5], "ctrl-")) {
             const ch = s[5];
@@ -50,8 +129,11 @@ pub const InputHandler = struct {
                 return .{ .forward = byte };
             },
             .command => {
-                if (byte == quit_key) {
-                    return .quit;
+                // Try matching single-byte bindings (e.g. ctrl+q)
+                for (self.bindings) |b| {
+                    if (b.sequence.len == 1 and b.sequence[0] == byte) {
+                        return b.action;
+                    }
                 }
                 if (byte == 0x1B) {
                     self.state = .command_esc;
@@ -70,28 +152,19 @@ pub const InputHandler = struct {
                 return .{ .forward = byte };
             },
             .command_csi => {
-                return switch (byte) {
-                    'A' => {
+                // Try matching 3-byte CSI bindings (ESC [ <byte>)
+                for (self.bindings) |b| {
+                    if (b.sequence.len == 3 and
+                        b.sequence[0] == 0x1B and
+                        b.sequence[1] == '[' and
+                        b.sequence[2] == byte)
+                    {
                         self.state = .command;
-                        return .focus_up;
-                    },
-                    'B' => {
-                        self.state = .command;
-                        return .focus_down;
-                    },
-                    'C' => {
-                        self.state = .command;
-                        return .focus_right;
-                    },
-                    'D' => {
-                        self.state = .command;
-                        return .focus_left;
-                    },
-                    else => {
-                        self.state = .normal;
-                        return .none;
-                    },
-                };
+                        return b.action;
+                    }
+                }
+                self.state = .normal;
+                return .none;
             },
         }
     }
