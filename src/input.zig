@@ -413,6 +413,56 @@ test "parseKey: returns null for invalid key" {
     try std.testing.expectEqual(@as(?[]const u8, null), parseKey(std.testing.allocator, "invalid"));
 }
 
+test "parseKey: parses space to 0x20" {
+    const seq = parseKey(std.testing.allocator, "space").?;
+    defer std.testing.allocator.free(seq);
+    try std.testing.expectEqual(@as(usize, 1), seq.len);
+    try std.testing.expectEqual(@as(u8, ' '), seq[0]);
+}
+
+test "parseKey: parses tab to 0x09" {
+    const seq = parseKey(std.testing.allocator, "tab").?;
+    defer std.testing.allocator.free(seq);
+    try std.testing.expectEqual(@as(u8, 0x09), seq[0]);
+}
+
+test "parseKey: parses enter to 0x0D" {
+    const seq = parseKey(std.testing.allocator, "enter").?;
+    defer std.testing.allocator.free(seq);
+    try std.testing.expectEqual(@as(u8, 0x0D), seq[0]);
+}
+
+test "parseKey: parses backspace to 0x7F" {
+    const seq = parseKey(std.testing.allocator, "backspace").?;
+    defer std.testing.allocator.free(seq);
+    try std.testing.expectEqual(@as(u8, 0x7F), seq[0]);
+}
+
+test "parseKey: parses escape to 0x1B" {
+    const seq = parseKey(std.testing.allocator, "escape").?;
+    defer std.testing.allocator.free(seq);
+    try std.testing.expectEqual(@as(u8, 0x1B), seq[0]);
+}
+
+test "parseKey: parses single letter q to its ASCII byte" {
+    const seq = parseKey(std.testing.allocator, "q").?;
+    defer std.testing.allocator.free(seq);
+    try std.testing.expectEqual(@as(usize, 1), seq.len);
+    try std.testing.expectEqual(@as(u8, 'q'), seq[0]);
+}
+
+test "parseKey: parses single digit 1 to its ASCII byte" {
+    const seq = parseKey(std.testing.allocator, "1").?;
+    defer std.testing.allocator.free(seq);
+    try std.testing.expectEqual(@as(u8, '1'), seq[0]);
+}
+
+test "parseKey: parses punctuation to its ASCII byte" {
+    const seq = parseKey(std.testing.allocator, ".").?;
+    defer std.testing.allocator.free(seq);
+    try std.testing.expectEqual(@as(u8, '.'), seq[0]);
+}
+
 test "parseAction: parses known actions" {
     try std.testing.expectEqual(Action.quit, parseAction("quit").?);
     try std.testing.expectEqual(Action.focus_up, parseAction("focus_up").?);
