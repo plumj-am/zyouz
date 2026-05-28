@@ -1,4 +1,5 @@
 .{
+    .exit_on_focus_change = false,
     .layouts = .{
         .{
             .name = "default",
