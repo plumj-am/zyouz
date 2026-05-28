@@ -796,6 +796,97 @@ test "parseFromSlice: nested split with names" {
     try std.testing.expectEqualStrings("terminal", right.children[1].leaf.name);
 }
 
+test "parseFromSlice: keymaps are parsed" {
+    const source =
+        \\.{
+        \\    .keymaps = .{
+        \\        .{ .key = "ctrl-q", .action = "quit" },
+        \\        .{ .key = "up", .action = "focus_up" },
+        \\        .{ .key = "down", .action = "focus_down" },
+        \\        .{ .key = "left", .action = "focus_left" },
+        \\        .{ .key = "right", .action = "focus_right" },
+        \\    },
+        \\    .layouts = .{
+        \\        .{
+        \\            .name = "default",
+        \\            .root = .{ .command = .{"bash"} },
+        \\        },
+        \\    },
+        \\}
+    ;
+    var config = try parseFromSlice(std.testing.allocator, source);
+    defer config.deinit();
+
+    try std.testing.expectEqual(@as(usize, 5), config.bindings.len);
+    try std.testing.expectEqual(@import("input.zig").Action.quit, config.bindings[0].action);
+    try std.testing.expectEqual(@as(usize, 1), config.bindings[0].sequence.len);
+    try std.testing.expectEqual(@as(u8, 0x11), config.bindings[0].sequence[0]);
+    try std.testing.expectEqual(@as(usize, 3), config.bindings[1].sequence.len);
+    try std.testing.expectEqual(@as(u8, 0x1B), config.bindings[1].sequence[0]);
+    try std.testing.expectEqual(@as(u8, '['), config.bindings[1].sequence[1]);
+    try std.testing.expectEqual(@as(u8, 'A'), config.bindings[1].sequence[2]);
+}
+
+test "parseFromSlice: empty keymaps results in empty bindings" {
+    const source =
+        \\.{
+        \\    .keymaps = .{},
+        \\    .layouts = .{
+        \\        .{
+        \\            .name = "default",
+        \\            .root = .{ .command = .{"bash"} },
+        \\        },
+        \\    },
+        \\}
+    ;
+    var config = try parseFromSlice(std.testing.allocator, source);
+    defer config.deinit();
+
+    try std.testing.expectEqual(@as(usize, 0), config.bindings.len);
+}
+
+test "parseFromSlice: no keymaps defaults to empty bindings" {
+    const source =
+        \\.{
+        \\    .layouts = .{
+        \\        .{
+        \\            .name = "default",
+        \\            .root = .{ .command = .{"bash"} },
+        \\        },
+        \\    },
+        \\}
+    ;
+    var config = try parseFromSlice(std.testing.allocator, source);
+    defer config.deinit();
+
+    try std.testing.expectEqual(@as(usize, 0), config.bindings.len);
+}
+
+test "parseFromSlice: custom keymaps override defaults" {
+    const source =
+        \\.{
+        \\    .keymaps = .{
+        \\        .{ .key = "ctrl-j", .action = "focus_down" },
+        \\        .{ .key = "ctrl-k", .action = "focus_up" },
+        \\    },
+        \\    .layouts = .{
+        \\        .{
+        \\            .name = "default",
+        \\            .root = .{ .command = .{"bash"} },
+        \\        },
+        \\    },
+        \\}
+    ;
+    var config = try parseFromSlice(std.testing.allocator, source);
+    defer config.deinit();
+
+    try std.testing.expectEqual(@as(usize, 2), config.bindings.len);
+    try std.testing.expectEqual(@import("input.zig").Action.focus_down, config.bindings[0].action);
+    try std.testing.expectEqual(@as(u8, 0x0A), config.bindings[0].sequence[0]); // Ctrl+J = 0x0A
+    try std.testing.expectEqual(@import("input.zig").Action.focus_up, config.bindings[1].action);
+    try std.testing.expectEqual(@as(u8, 0x0B), config.bindings[1].sequence[0]); // Ctrl+K = 0x0B
+}
+
 test "nested split layout structure" {
     const inner1 = Pane{ .leaf = .{
         .command = &.{ "npm", "run", "dev" },
