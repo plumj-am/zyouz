@@ -127,41 +127,41 @@ Override with the `ZYOUZ_CONFIG` environment variable.
 
 ### Global options
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `prefix_key` | `"ctrl-s"` | Key to enter command mode |
-| `pane_gap` | `1` | Space between panes (cells) |
-| `exit_on_focus_change` | `false` | Exit command mode after moving focus |
+| Option                 | Default    | Description                          |
+| ---------------------- | ---------- | ------------------------------------ |
+| `prefix_key`           | `"ctrl-s"` | Key to enter command mode            |
+| `pane_gap`             | `1`        | Space between panes (cells)          |
+| `exit_on_focus_change` | `false`    | Exit command mode after moving focus |
 
 ### Pane options
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `command` | *(required)* | Command and arguments |
-| `name` | `null` | Label shown in pane border |
-| `size` | `.equal` | `.equal`, `.{ .percent = N }`, or `.{ .fixed = N }` |
-| `mouse` | `.capture` | `.capture` or `.passthrough` |
-| `restart` | `.never` | `.never` or `.on_failure` |
+| Option    | Default      | Description                                         |
+| --------- | ------------ | --------------------------------------------------- |
+| `command` | _(required)_ | Command and arguments                               |
+| `name`    | `null`       | Label shown in pane border                          |
+| `size`    | `.equal`     | `.equal`, `.{ .percent = N }`, or `.{ .fixed = N }` |
+| `mouse`   | `.capture`   | `.capture` or `.passthrough`                        |
+| `restart` | `.never`     | `.never` or `.on_failure`                           |
 
 ### Split options
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `direction` | *(required)* | `.horizontal` or `.vertical` |
-| `children` | *(required)* | Array of child panes |
-| `size` | `.equal` | Same as pane size |
+| Option      | Default      | Description                  |
+| ----------- | ------------ | ---------------------------- |
+| `direction` | _(required)_ | `.horizontal` or `.vertical` |
+| `children`  | _(required)_ | Array of child panes         |
+| `size`      | `.equal`     | Same as pane size            |
 
 ## Keybindings
 
-All input is forwarded to the focused pane. Press the **prefix key**
-(`Ctrl+S` by default) to enter command mode.
+All input is forwarded to the focused pane. Press the **prefix key** (`Ctrl+S`
+by default) to enter command mode.
 
-| Key | Action |
-|-----|--------|
-| `←` `↓` `↑` `→` | Move focus to adjacent pane |
-| `Ctrl+Q` | Quit |
-| *prefix key* | Send the prefix key itself to the pane |
-| *any other key* | Exit command mode and forward to pane |
+| Key             | Action                                 |
+| --------------- | -------------------------------------- |
+| `←` `↓` `↑` `→` | Move focus to adjacent pane            |
+| `Ctrl+Q`        | Quit                                   |
+| _prefix key_    | Send the prefix key itself to the pane |
+| _any other key_ | Exit command mode and forward to pane  |
 
 Arrow keys stay in command mode so you can press multiple directions in a row.
 
