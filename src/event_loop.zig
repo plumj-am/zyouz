@@ -440,34 +440,40 @@ fn flushMouseParser(
     needs_render: *bool,
 ) void {
     // Check to see if bytes were consumed without emitting.
-    if (mouse_parser.state == .esc) {
-        mouse_parser.state = .ground;
-        processKeyByte(0x1B, handler, panes, rects, active_pane, renderer, needs_render) catch |err| switch (err) {
-            error.Quit => {
-                gracefulShutdown(panes);
-                return;
-            },
-            else => {},
-        };
-    } else if (mouse_parser.state == .csi) {
-        mouse_parser.state = .ground;
-        processKeyByte(0x1B, handler, panes, rects, active_pane, renderer, needs_render) catch |err| switch (err) {
-            error.Quit => {
-                gracefulShutdown(panes);
-                return;
-            },
-            else => {},
-        };
-        processKeyByte('[', handler, panes, rects, active_pane, renderer, needs_render) catch |err| switch (err) {
-            error.Quit => {
-                gracefulShutdown(panes);
-                return;
-            },
-            else => {},
-        };
-    } else if (mouse_parser.state == .params) {
-        mouse_parser.state = .ground;
-        mouse_parser.param_len = 0;
+    switch (mouse_parser.state) {
+        .esc => {
+            mouse_parser.state = .ground;
+            processKeyByte(0x1B, handler, panes, rects, active_pane, renderer, needs_render) catch |err| switch (err) {
+                error.Quit => {
+                    gracefulShutdown(panes);
+                    return;
+                },
+                else => {},
+            };
+        },
+        .csi => {
+            mouse_parser.state = .ground;
+            processKeyByte(0x1B, handler, panes, rects, active_pane, renderer, needs_render) catch |err| switch (err) {
+                error.Quit => {
+                    gracefulShutdown(panes);
+                    return;
+                },
+                else => {},
+            };
+            processKeyByte('[', handler, panes, rects, active_pane, renderer, needs_render) catch |err| switch (err) {
+                error.Quit => {
+                    gracefulShutdown(panes);
+                    return;
+                },
+                else => {},
+            };
+        },
+        .params => {
+            // Incomplete so just reset.
+            mouse_parser.state = .ground;
+            mouse_parser.param_len = 0;
+        },
+        .ground => {},
     }
 }
 
