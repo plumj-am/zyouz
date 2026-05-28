@@ -191,6 +191,7 @@ pub fn main() !void {
         config.prefix_key,
         config.pane_gap,
         config.bindings,
+        config.exit_on_focus,
     ) catch {};
 }
 

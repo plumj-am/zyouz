@@ -240,6 +240,7 @@ pub fn runMultiPane(
     prefix_key: u8,
     pane_gap: u16,
     bindings: []const input.Binding,
+    exit_on_focus: bool,
 ) !void {
     try installSignalHandler();
     defer {
@@ -256,6 +257,7 @@ pub fn runMultiPane(
     }
 
     var handler = input.InputHandler.initWithBindings(prefix_key, bindings);
+    handler.exit_on_focus = exit_on_focus;
     var mouse_parser = MouseParser{};
     var drag_state: ?DragState = null;
     var selection_anchor: ?SelectionAnchor = null;
@@ -519,7 +521,7 @@ fn processKeyByte(
         .none => {},
     }
     if (handler.state != prev_state and
-        (handler.state == .command or prev_state == .command))
+        (handler.state == .command or prev_state == .command or prev_state == .command_csi))
     {
         recomputeBorders(renderer, panes, rects, active_pane.*, handler.state == .command);
         needs_render.* = true;
