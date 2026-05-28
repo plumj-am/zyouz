@@ -61,7 +61,7 @@ pub const Result = union(enum) {
     csi_passthrough: u8,
 };
 
-const State = enum {
+pub const State = enum {
     ground,
     esc,
     csi,
