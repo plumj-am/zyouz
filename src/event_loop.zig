@@ -353,6 +353,14 @@ pub fn runMultiPane(
             }
         }
 
+        // If all panes have exited, render final state and quit.
+        var all_exited = true;
+        for (panes) |*pane| {
+            if (pane.isAlive()) {
+                all_exited = false;
+                break;
+            }
+        }
         // Handle terminal input → active pane
         if (fds[0].revents & posix.POLL.IN != 0) {
             const n = terminal.readInput(&buf) catch continue;
@@ -424,6 +432,15 @@ pub fn runMultiPane(
 
         if (needs_render) {
             try renderAll(allocator, terminal, renderer, panes, rects, active_pane.*, selection);
+        }
+
+        // All panes have exited — clear screen, show message, wait for key.
+        if (all_exited) {
+            try terminal.writeAll("\x1b[2J\x1b[H"); // Clear screen and move cursor to home.
+            try terminal.writeAll("All panes exited. Press any key to exit zyouz.\r\n");
+            var key: [4]u8 = undefined;
+            _ = terminal.readInput(&key) catch {};
+            return;
         }
     }
 }
