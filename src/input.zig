@@ -344,3 +344,95 @@ test "parseCtrlKey: returns null for invalid input" {
     try std.testing.expectEqual(@as(?u8, null), InputHandler.parseCtrlKey("ctrl-"));
     try std.testing.expectEqual(@as(?u8, null), InputHandler.parseCtrlKey("ctrl-ab"));
 }
+
+test "parseKey: parses ctrl-q to [0x11]" {
+    const buf = try std.testing.allocator.alloc(u8, 8);
+    defer std.testing.allocator.free(buf);
+    const seq = parseKey(std.testing.allocator, "ctrl-q").?;
+    defer std.testing.allocator.free(seq);
+    try std.testing.expectEqual(@as(usize, 1), seq.len);
+    try std.testing.expectEqual(@as(u8, 0x11), seq[0]);
+}
+
+test "parseKey: parses up to ESC [ A" {
+    const seq = parseKey(std.testing.allocator, "up").?;
+    defer std.testing.allocator.free(seq);
+    try std.testing.expectEqual(@as(usize, 3), seq.len);
+    try std.testing.expectEqual(@as(u8, 0x1B), seq[0]);
+    try std.testing.expectEqual(@as(u8, '['), seq[1]);
+    try std.testing.expectEqual(@as(u8, 'A'), seq[2]);
+}
+
+test "parseKey: parses down to ESC [ B" {
+    const seq = parseKey(std.testing.allocator, "down").?;
+    defer std.testing.allocator.free(seq);
+    try std.testing.expectEqual(@as(usize, 3), seq.len);
+    try std.testing.expectEqual(@as(u8, 0x1B), seq[0]);
+    try std.testing.expectEqual(@as(u8, '['), seq[1]);
+    try std.testing.expectEqual(@as(u8, 'B'), seq[2]);
+}
+
+test "parseKey: returns null for invalid key" {
+    try std.testing.expectEqual(@as(?[]const u8, null), parseKey(std.testing.allocator, "invalid"));
+}
+
+test "parseAction: parses known actions" {
+    try std.testing.expectEqual(Action.quit, parseAction("quit").?);
+    try std.testing.expectEqual(Action.focus_up, parseAction("focus_up").?);
+    try std.testing.expectEqual(Action.focus_down, parseAction("focus_down").?);
+    try std.testing.expectEqual(Action.focus_left, parseAction("focus_left").?);
+    try std.testing.expectEqual(Action.focus_right, parseAction("focus_right").?);
+}
+
+test "parseAction: returns null for unknown action" {
+    const result = parseAction("unknown");
+    try std.testing.expect(result == null);
+}
+
+test "custom bindings: Ctrl+J for focus_down" {
+    const bindings = [_]Binding{
+        .{ .action = .quit, .sequence = &[_]u8{0x11} },
+        .{ .action = .focus_down, .sequence = &[_]u8{0x0A} }, // Ctrl+J
+    };
+    var handler = InputHandler.initWithBindings(0x13, &bindings);
+
+    try std.testing.expectEqual(InputHandler.State.command, blk: {
+        _ = handler.feed(0x13);
+        break :blk handler.state;
+    });
+
+    // Ctrl+J should trigger focus_down
+    const action = handler.feed(0x0A);
+    try std.testing.expectEqual(Action.focus_down, action);
+    try std.testing.expectEqual(InputHandler.State.command, handler.state);
+}
+
+test "custom bindings: unmatched byte still exits command mode and forwards" {
+    const bindings = [_]Binding{
+        .{ .action = .quit, .sequence = &[_]u8{0x11} },
+    };
+    var handler = InputHandler.initWithBindings(0x13, &bindings);
+
+    _ = handler.feed(0x13); // enter command mode
+    const action = handler.feed('z'); // unmatched
+    try std.testing.expectEqual(Action{ .forward = 'z' }, action);
+    try std.testing.expectEqual(InputHandler.State.normal, handler.state);
+}
+
+test "custom bindings: empty bindings falls back to defaults" {
+    var handler = InputHandler.initWithBindings(0x13, &.{});
+
+    _ = handler.feed(0x13); // enter command mode
+    // Ctrl+Q should still work (from defaults)
+    try std.testing.expectEqual(Action.quit, handler.feed(0x11));
+}
+
+test "custom bindings: arrow keys still work with defaults" {
+    var handler = InputHandler.initWithBindings(0x13, &.{});
+
+    _ = handler.feed(0x13); // enter command mode
+    try std.testing.expectEqual(Action.none, handler.feed(0x1B));
+    try std.testing.expectEqual(Action.none, handler.feed('['));
+    try std.testing.expectEqual(Action.focus_up, handler.feed('A'));
+    try std.testing.expectEqual(InputHandler.State.command, handler.state);
+}
