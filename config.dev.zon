@@ -32,4 +32,12 @@
             },
         },
     },
+    // Uncomment to customize keybindings:
+    // .keymaps = .{
+    //     .{ .key = "ctrl-q", .action = "quit" },
+    //     .{ .key = "up", .action = "focus_up" },
+    //     .{ .key = "down", .action = "focus_down" },
+    //     .{ .key = "left", .action = "focus_left" },
+    //     .{ .key = "right", .action = "focus_right" },
+    // },
 }

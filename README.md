@@ -131,6 +131,7 @@ Override with the `ZYOUZ_CONFIG` environment variable.
 |--------|---------|-------------|
 | `prefix_key` | `"ctrl-s"` | Key to enter command mode |
 | `pane_gap` | `1` | Space between panes (cells) |
+| `keymaps` | *(defaults)* | Custom key-action bindings (see [Keybindings](#keybindings)) |
 
 ### Pane options
 
@@ -155,6 +156,8 @@ Override with the `ZYOUZ_CONFIG` environment variable.
 All input is forwarded to the focused pane. Press the **prefix key**
 (`Ctrl+S` by default) to enter command mode.
 
+### Default bindings
+
 | Key | Action |
 |-----|--------|
 | `←` `↓` `↑` `→` | Move focus to adjacent pane |
@@ -163,6 +166,29 @@ All input is forwarded to the focused pane. Press the **prefix key**
 | *any other key* | Exit command mode and forward to pane |
 
 Arrow keys stay in command mode so you can press multiple directions in a row.
+
+### Custom bindings
+
+Override command-mode keybindings with the `keymaps` option.
+Accepts: `ctrl-{a-z}`, `up`, `down`, `left`, `right`.
+
+```zig
+.{
+    .prefix_key = "ctrl-s",
+    .keymaps = .{
+        .{ .key = "ctrl-q", .action = "quit" },
+        .{ .key = "ctrl-h", .action = "focus_left" },
+        .{ .key = "ctrl-j", .action = "focus_down" },
+        .{ .key = "ctrl-k", .action = "focus_up" },
+        .{ .key = "ctrl-l", .action = "focus_right" },
+    },
+    .layouts = .{ ... },
+}
+```
+
+>[!WARNING]
+>When `keymaps` is set, only the listed bindings apply - no defaults!
+>Omit `keymaps` entirely to keep the default arrow-key bindings.
 
 ### Mouse
 
