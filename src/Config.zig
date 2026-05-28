@@ -52,6 +52,7 @@ pub const Config = struct {
     layouts: std.StringArrayHashMapUnmanaged(Layout),
     prefix_key: u8 = 0x13, // Ctrl+S default
     pane_gap: u16 = 1,
+    exit_on_focus: bool = false,
 
     pub fn deinit(self: *Config) void {
         self.layouts.deinit(self.arena.allocator());
@@ -99,6 +100,7 @@ pub const ZonNamedLayout = struct {
 pub const ZonConfig = struct {
     prefix_key: ?[]const u8 = null,
     pane_gap: ?u16 = null,
+    exit_on_focus: ?bool = null,
     layouts: []const ZonNamedLayout,
 };
 
@@ -179,7 +181,13 @@ pub fn parseFromSlice(backing_allocator: Allocator, source: [:0]const u8) ParseE
         }
     }
 
-    return .{ .arena = arena, .layouts = layouts, .prefix_key = prefix_key, .pane_gap = zon_config.pane_gap orelse 1 };
+    return .{
+        .arena = arena,
+        .layouts = layouts,
+        .prefix_key = prefix_key,
+        .pane_gap = zon_config.pane_gap orelse 1,
+        .exit_on_focus = zon_config.exit_on_focus orelse false,
+    };
 }
 
 /// Read and parse a ZON config file from the given path.
