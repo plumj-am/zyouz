@@ -52,6 +52,7 @@ pub const Config = struct {
     layouts: std.StringArrayHashMapUnmanaged(Layout),
     prefix_key: u8 = 0x13, // Ctrl+S default
     pane_gap: u16 = 1,
+    bindings: []const @import("input.zig").Binding = &.{},
 
     pub fn deinit(self: *Config) void {
         self.layouts.deinit(self.arena.allocator());
@@ -185,7 +186,24 @@ pub fn parseFromSlice(backing_allocator: Allocator, source: [:0]const u8) ParseE
         }
     }
 
-    return .{ .arena = arena, .layouts = layouts, .prefix_key = prefix_key, .pane_gap = zon_config.pane_gap orelse 1 };
+    // Parse keymaps if provided.
+    var bindings: []const input_mod.Binding = &.{};
+    if (zon_config.keymaps) |km| {
+        var list = std.ArrayListUnmanaged(input_mod.Binding){};
+        errdefer list.deinit(alloc);
+
+        for (km) |zb| {
+            if (input_mod.parseKey(alloc, zb.key)) |seq| {
+                if (input_mod.parseAction(zb.action)) |action| {
+                    try list.append(alloc, .{ .action = action, .sequence = seq });
+                }
+            }
+        }
+
+        bindings = list.items;
+    }
+
+    return .{ .arena = arena, .layouts = layouts, .prefix_key = prefix_key, .pane_gap = zon_config.pane_gap orelse 1, .bindings = bindings };
 }
 
 /// Read and parse a ZON config file from the given path.

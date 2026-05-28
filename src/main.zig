@@ -190,6 +190,7 @@ pub fn main() !void {
         &active_pane,
         config.prefix_key,
         config.pane_gap,
+        config.bindings,
     ) catch {};
 }
 
