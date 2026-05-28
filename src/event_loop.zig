@@ -418,9 +418,56 @@ pub fn runMultiPane(
             }
         }
 
+        // Flush any bytes the mouse parser consumed but couldn't complete into
+        // a mouse sequence (e.g. a single ESC key press).
+        flushMouseParser(&mouse_parser, &handler, panes, rects, active_pane, renderer, &needs_render);
+
         if (needs_render) {
             try renderAll(allocator, terminal, renderer, panes, rects, active_pane.*, selection);
         }
+    }
+}
+
+/// If the mouse parser consumed ESC (or ESC [) as a mouse sequence prefix but
+/// no bytes followed, replay the bytes so they reach the input handler.
+fn flushMouseParser(
+    mouse_parser: *MouseParser,
+    handler: *input.InputHandler,
+    panes: []Pane,
+    rects: []const Layout.Rect,
+    active_pane: *usize,
+    renderer: *Renderer,
+    needs_render: *bool,
+) void {
+    // Check to see if bytes were consumed without emitting.
+    if (mouse_parser.state == .esc) {
+        mouse_parser.state = .ground;
+        processKeyByte(0x1B, handler, panes, rects, active_pane, renderer, needs_render) catch |err| switch (err) {
+            error.Quit => {
+                gracefulShutdown(panes);
+                return;
+            },
+            else => {},
+        };
+    } else if (mouse_parser.state == .csi) {
+        mouse_parser.state = .ground;
+        processKeyByte(0x1B, handler, panes, rects, active_pane, renderer, needs_render) catch |err| switch (err) {
+            error.Quit => {
+                gracefulShutdown(panes);
+                return;
+            },
+            else => {},
+        };
+        processKeyByte('[', handler, panes, rects, active_pane, renderer, needs_render) catch |err| switch (err) {
+            error.Quit => {
+                gracefulShutdown(panes);
+                return;
+            },
+            else => {},
+        };
+    } else if (mouse_parser.state == .params) {
+        mouse_parser.state = .ground;
+        mouse_parser.param_len = 0;
     }
 }
 
