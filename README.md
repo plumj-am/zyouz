@@ -33,7 +33,7 @@ nix run github:YutaUra/zyouz
   inputs.zyouz.url = "github:YutaUra/zyouz";
 
   # In your home-manager configuration:
-  imports = [ zyouz.homeManagerModules.default ];
+  imports = [ zyouz.homeModules.default ];
 
   programs.zyouz = {
     enable = true;
