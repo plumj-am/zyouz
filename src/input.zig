@@ -72,6 +72,43 @@ pub fn parseKey(allocator: std.mem.Allocator, key: []const u8) ?[]const u8 {
         buf[2] = 'D';
         return buf;
     }
+    if (std.mem.eql(u8, key, "space")) {
+        const buf = allocator.alloc(u8, 1) catch return null;
+        buf[0] = ' ';
+        return buf;
+    }
+    if (std.mem.eql(u8, key, "tab")) {
+        const buf = allocator.alloc(u8, 1) catch return null;
+        buf[0] = 0x09;
+        return buf;
+    }
+    if (std.mem.eql(u8, key, "enter")) {
+        const buf = allocator.alloc(u8, 1) catch return null;
+        buf[0] = 0x0D;
+        return buf;
+    }
+    if (std.mem.eql(u8, key, "backspace")) {
+        const buf = allocator.alloc(u8, 1) catch return null;
+        buf[0] = 0x7F;
+        return buf;
+    }
+    if (std.mem.eql(u8, key, "escape")) {
+        const buf = allocator.alloc(u8, 1) catch return null;
+        buf[0] = 0x1B;
+        return buf;
+    }
+    // All other characters e.g. "h", ".", ";" etc.
+    if (key.len == 1) {
+        const ch = key[0];
+        // Only use printable ASCII (32-126) to avoid stop control chars being
+        // seen as literal key names (we can use "tab", "enter", etc. from above
+        // instead). <https://www.ascii-code.com>
+        if (ch >= 32 and ch <= 126) {
+            const buf = allocator.alloc(u8, 1) catch return null;
+            buf[0] = ch;
+            return buf;
+        }
+    }
     return null;
 }
 
