@@ -239,6 +239,7 @@ pub fn runMultiPane(
     active_pane: *usize,
     prefix_key: u8,
     pane_gap: u16,
+    bindings: []const input.Binding,
 ) !void {
     try installSignalHandler();
     defer {
@@ -254,7 +255,7 @@ pub fn runMultiPane(
         terminal.disableMouseTracking() catch {};
     }
 
-    var handler = input.InputHandler.initWithPrefix(prefix_key);
+    var handler = input.InputHandler.initWithBindings(prefix_key, bindings);
     var mouse_parser = MouseParser{};
     var drag_state: ?DragState = null;
     var selection_anchor: ?SelectionAnchor = null;
