@@ -18,7 +18,7 @@
       flake-utils,
     }:
     {
-      homeManagerModules.default = import ./nix/hm-module.nix;
+      homeModules.default = import ./nix/hm-module.nix;
     }
     // flake-utils.lib.eachDefaultSystem (
       system:
@@ -31,7 +31,7 @@
           version = "0.3.0";
           src = self;
 
-          nativeBuildInputs = [ pkgs.zig.hook ];
+          nativeBuildInputs = [ pkgs.zig_0_15.hook ];
 
           # zig test requires a TTY, which is unavailable in the Nix sandbox
           dontUseZigCheck = true;
