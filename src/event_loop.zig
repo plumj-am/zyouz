@@ -1145,3 +1145,55 @@ test "Selection.normalized reverses when end before start" {
     try std.testing.expectEqual(@as(i64, 10), n.end_row);
     try std.testing.expectEqual(@as(u16, 5), n.end_col);
 }
+
+test "flushMouseParser unsticks ESC from mouse parser" {
+    var parser = MouseParser{};
+    _ = parser.feed(0x1B);
+    try std.testing.expectEqual(MouseParser.State.esc, parser.state);
+
+    var handler = input.InputHandler{};
+    var empty_panes: [0]Pane = .{};
+    var empty_rects: [0]Layout.Rect = .{};
+    var active_pane: usize = 0;
+    const alloc = std.testing.allocator;
+    var renderer = Renderer{
+        .width = 0,
+        .height = 0,
+        .border_grid = &.{},
+        .border_cells = &.{},
+        .border_colors = &.{},
+        .pane_adjacency = &.{},
+        .allocator = alloc,
+    };
+    var needs_render = false;
+
+    flushMouseParser(&parser, &handler, &empty_panes, &empty_rects, &active_pane, &renderer, &needs_render);
+
+    try std.testing.expectEqual(MouseParser.State.ground, parser.state);
+    try std.testing.expectEqual(MouseParser.Result{ .passthrough = 'a' }, parser.feed('a'));
+}
+
+test "flushMouseParser is no-op when parser is already in ground state" {
+    var parser = MouseParser{};
+    try std.testing.expectEqual(MouseParser.State.ground, parser.state);
+
+    var handler = input.InputHandler{};
+    var empty_panes: [0]Pane = .{};
+    var empty_rects: [0]Layout.Rect = .{};
+    var active_pane: usize = 0;
+    var renderer = Renderer{
+        .width = 0,
+        .height = 0,
+        .border_grid = &.{},
+        .border_cells = &.{},
+        .border_colors = &.{},
+        .pane_adjacency = &.{},
+        .allocator = std.testing.allocator,
+    };
+    var needs_render = false;
+
+    flushMouseParser(&parser, &handler, &empty_panes, &empty_rects, &active_pane, &renderer, &needs_render);
+
+    try std.testing.expectEqual(MouseParser.State.ground, parser.state);
+    try std.testing.expectEqual(MouseParser.Result{ .passthrough = 'a' }, parser.feed('a'));
+}
