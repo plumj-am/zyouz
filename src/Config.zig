@@ -96,10 +96,16 @@ pub const ZonNamedLayout = struct {
     root: ZonPane,
 };
 
+pub const ZonBinding = struct {
+    key: []const u8,
+    action: []const u8,
+};
+
 pub const ZonConfig = struct {
     prefix_key: ?[]const u8 = null,
     pane_gap: ?u16 = null,
     layouts: []const ZonNamedLayout,
+    keymaps: ?[]const ZonBinding = null,
 };
 
 pub const ParseError = error{
