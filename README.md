@@ -131,6 +131,7 @@ Override with the `ZYOUZ_CONFIG` environment variable.
 |--------|---------|-------------|
 | `prefix_key` | `"ctrl-s"` | Key to enter command mode |
 | `pane_gap` | `1` | Space between panes (cells) |
+| `exit_on_focus_change` | `false` | Exit command mode after moving focus |
 
 ### Pane options
 
