@@ -171,6 +171,12 @@ pub const InputHandler = struct {
                 // Try matching single-byte bindings (e.g. ctrl+q)
                 for (self.bindings) |b| {
                     if (b.sequence.len == 1 and b.sequence[0] == byte) {
+                        if (self.exit_on_focus_change) {
+                            switch (b.action) {
+                                .focus_up, .focus_down, .focus_left, .focus_right => self.state = .normal,
+                                else => {},
+                            }
+                        }
                         return b.action;
                     }
                 }

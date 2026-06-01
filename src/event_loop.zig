@@ -678,7 +678,7 @@ fn handleMouseEvent(
     rects: []Layout.Rect,
     active_pane: *usize,
     renderer: *Renderer,
-    handler: *const input.InputHandler,
+    handler: *input.InputHandler,
     drag_state: *?DragState,
     selection_anchor: *?SelectionAnchor,
     selection: *?Selection,
@@ -786,6 +786,7 @@ fn handleMouseEvent(
                     }
                     if (target_pane != active_pane.*) {
                         active_pane.* = target_pane;
+                        if (handler.exit_on_focus_change) handler.state = .normal;
                         recomputeBorders(renderer, panes, rects, active_pane.*, handler.state == .command);
                         needs_render.* = true;
                     }
@@ -868,6 +869,7 @@ fn handleMouseEvent(
                     }
                 } else if (anchor.pane != active_pane.*) {
                     active_pane.* = anchor.pane;
+                    if (handler.exit_on_focus_change) handler.state = .normal;
                     recomputeBorders(renderer, panes, rects, active_pane.*, handler.state == .command);
                     needs_render.* = true;
                 }
